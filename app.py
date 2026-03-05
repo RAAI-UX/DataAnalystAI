@@ -654,4 +654,10 @@ else:
                 st.write(out)
             else:
                 st.write(out)
-            st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown(
+    """
+    <meta name="google-site-verification" content="Yr6DCmnKvnLK57ejhzk4-qj6HX8CwTKG26DxQTg4heQ" />
+    """,
+    unsafe_allow_html=True
+)
