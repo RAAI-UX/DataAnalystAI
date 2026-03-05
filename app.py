@@ -9,6 +9,14 @@ from sklearn.linear_model import LinearRegression
 
 st.set_page_config(page_title="DataAnalyst AI", page_icon="✨", layout="wide")
 
+# ✅ Google Search Console verification (PASTE ONCE, AT TOP)
+st.markdown(
+    """
+    <meta name="google-site-verification" content="Yr6DCmnKvnLK57ejhzk4-qj6HX8CwTKG26DxQTg4heQ" />
+    """,
+    unsafe_allow_html=True
+)
+
 # -------------------- THEME: NEON + GLASS + ANIMATIONS --------------------
 st.markdown("""
 <style>
@@ -230,13 +238,6 @@ def normalize_dt(df, col):
     except Exception:
         return pd.Series([pd.NaT] * len(df))
 
-def render_badges(items):
-    if not items:
-        st.markdown("<span class='muted'>None</span>", unsafe_allow_html=True)
-        return
-    html = "".join([f"<span class='badge'>{x}</span>" for x in items[:80]])
-    st.markdown(html, unsafe_allow_html=True)
-
 def ai_insights(df):
     out = []
     out.append(f"Dataset contains **{df.shape[0]} rows** and **{df.shape[1]} columns**.")
@@ -265,13 +266,6 @@ def ai_insights(df):
                 out.append(f"Strong relationship: **{best[1]} ↔ {best[2]}** (corr ≈ {best[3]:.2f}).")
             else:
                 out.append(f"Top correlation: **{best[1]} ↔ {best[2]}** (corr ≈ {best[3]:.2f}).")
-
-    cat = categorical_cols(df)
-    if cat:
-        c = cat[0]
-        top = df[c].astype(str).value_counts().head(1)
-        if len(top) > 0:
-            out.append(f"Most frequent **{c}** value: **{top.index[0]}**.")
     out.append("Next steps: validate units, handle missing values, check outliers, and build KPI charts.")
     return out
 
@@ -364,7 +358,6 @@ if "df" not in st.session_state:
 # -------------------- NAVBAR (with logo image + neon icon) --------------------
 left_logo, right_nav = st.columns([2, 1])
 with left_logo:
-    # Show image logo if present
     try:
         st.image("assets/logo.png", width=80)
     except Exception:
@@ -387,7 +380,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Sidebar navigation
 page = st.sidebar.radio(
     "Menu",
     ["🏠 Home", "📥 Upload", "📈 Dashboard", "🧠 Insights", "🚨 Anomalies", "🔮 Forecast", "💬 Ask Data"]
@@ -413,15 +405,6 @@ if page == "🏠 Home":
     </div>
     """, unsafe_allow_html=True)
 
-    st.write("")
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown("<div class='glass'><b>Upload & Clean</b><br><span class='muted'>See types, missing values, duplicates and fix them.</span></div>", unsafe_allow_html=True)
-    with c2:
-        st.markdown("<div class='glass'><b>Interactive Dashboard</b><br><span class='muted'>Charts + filters + correlations like a real analyst.</span></div>", unsafe_allow_html=True)
-    with c3:
-        st.markdown("<div class='glass'><b>ML Features</b><br><span class='muted'>IsolationForest anomalies + simple forecasting model.</span></div>", unsafe_allow_html=True)
-
 # -------------------- UPLOAD --------------------
 elif page == "📥 Upload":
     st.markdown("### 📥 Upload your dataset")
@@ -444,39 +427,6 @@ elif page == "📥 Upload":
         st.markdown("### Preview")
         st.dataframe(df.head(60), use_container_width=True)
 
-        miss_total = int(df.isna().sum().sum())
-        dup_total = int(df.duplicated().sum())
-
-        c1, c2, c3, c4 = st.columns(4)
-        c1.markdown(f"<div class='glass-soft'><div class='kpi'>{df.shape[0]}</div><div class='kpi-label'>Rows</div></div>", unsafe_allow_html=True)
-        c2.markdown(f"<div class='glass-soft'><div class='kpi'>{df.shape[1]}</div><div class='kpi-label'>Columns</div></div>", unsafe_allow_html=True)
-        c3.markdown(f"<div class='glass-soft'><div class='kpi'>{miss_total}</div><div class='kpi-label'>Missing</div></div>", unsafe_allow_html=True)
-        c4.markdown(f"<div class='glass-soft'><div class='kpi'>{dup_total}</div><div class='kpi-label'>Duplicates</div></div>", unsafe_allow_html=True)
-
-        st.markdown("<div class='glass'>", unsafe_allow_html=True)
-        st.write("**Column Types**")
-        st.dataframe(pd.DataFrame({"column": df.columns, "dtype": [str(x) for x in df.dtypes]}), use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        st.markdown("### Quick Cleaning")
-        st.markdown("<div class='glass'>", unsafe_allow_html=True)
-        option = st.selectbox("Choose", ["None", "Drop rows with any missing", "Fill numeric missing (median)", "Fill categorical missing (mode)"])
-        if st.button("Apply cleaning"):
-            df2 = df.copy()
-            if option == "Drop rows with any missing":
-                df2 = df2.dropna()
-            elif option == "Fill numeric missing (median)":
-                for c in numeric_cols(df2):
-                    df2[c] = df2[c].fillna(df2[c].median())
-            elif option == "Fill categorical missing (mode)":
-                for c in categorical_cols(df2):
-                    m = df2[c].mode()
-                    if len(m) > 0:
-                        df2[c] = df2[c].fillna(m.iloc[0])
-            st.session_state.df = df2
-            st.success("✅ Cleaning applied.")
-        st.markdown("</div>", unsafe_allow_html=True)
-
 # -------------------- DASHBOARD --------------------
 elif page == "📈 Dashboard":
     df = st.session_state.df
@@ -495,11 +445,6 @@ elif page == "📈 Dashboard":
                 view = view[view[fcol].astype(str).isin(chosen)]
         st.markdown("</div>", unsafe_allow_html=True)
 
-        c1, c2, c3 = st.columns(3)
-        c1.markdown(f"<div class='glass-soft'><div class='kpi'>{view.shape[0]}</div><div class='kpi-label'>Rows (filtered)</div></div>", unsafe_allow_html=True)
-        c2.markdown(f"<div class='glass-soft'><div class='kpi'>{len(numeric_cols(view))}</div><div class='kpi-label'>Numeric cols</div></div>", unsafe_allow_html=True)
-        c3.markdown(f"<div class='glass-soft'><div class='kpi'>{len(categorical_cols(view))}</div><div class='kpi-label'>Categorical cols</div></div>", unsafe_allow_html=True)
-
         st.markdown("### Chart Builder")
         st.markdown("<div class='glass'>", unsafe_allow_html=True)
         chart = st.selectbox("Chart type", ["Bar", "Line", "Scatter", "Histogram", "Box"])
@@ -517,21 +462,15 @@ elif page == "📈 Dashboard":
                 else:
                     fig = px.bar(view, x=x, y=y)
             elif chart == "Line":
-                if y == "(none)":
-                    st.info("Pick a numeric Y for Line chart.")
-                else:
+                if y != "(none)":
                     fig = px.line(view, x=x, y=y)
             elif chart == "Scatter":
-                if y == "(none)":
-                    st.info("Pick a numeric Y for Scatter.")
-                else:
+                if y != "(none)":
                     fig = px.scatter(view, x=x, y=y)
             elif chart == "Histogram":
                 fig = px.histogram(view, x=x)
             elif chart == "Box":
-                if y == "(none)":
-                    st.info("Pick a numeric Y for Box chart.")
-                else:
+                if y != "(none)":
                     fig = px.box(view, x=x, y=y)
 
             if fig is not None:
@@ -539,15 +478,6 @@ elif page == "📈 Dashboard":
         except Exception as e:
             st.error(f"Chart error: {e}")
         st.markdown("</div>", unsafe_allow_html=True)
-
-        st.markdown("### Correlation Heatmap")
-        num = numeric_cols(view)
-        if len(num) >= 2:
-            corr = view[num].corr(numeric_only=True)
-            heat = px.imshow(corr, text_auto=True, aspect="auto")
-            st.plotly_chart(heat, use_container_width=True)
-        else:
-            st.info("Need at least 2 numeric columns.")
 
 # -------------------- INSIGHTS --------------------
 elif page == "🧠 Insights":
@@ -582,16 +512,8 @@ elif page == "🚨 Anomalies":
                 st.warning(err)
             else:
                 an = out[out["anomaly"] == True]
-                st.markdown("<div class='glass'>", unsafe_allow_html=True)
                 st.write(f"Detected **{len(an)} anomalies** in **{col}**.")
                 st.dataframe(an.head(50), use_container_width=True)
-                st.markdown("</div>", unsafe_allow_html=True)
-
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(y=out[col], mode="markers", name="All"))
-                fig.add_trace(go.Scatter(y=an[col], mode="markers", name="Anomalies", marker=dict(size=10, symbol="x")))
-                fig.update_layout(title=f"Anomalies in {col}", xaxis_title="Index", yaxis_title=col)
-                st.plotly_chart(fig, use_container_width=True)
 
 # -------------------- FORECAST --------------------
 elif page == "🔮 Forecast":
@@ -600,17 +522,13 @@ elif page == "🔮 Forecast":
         st.warning("Upload dataset first in **Upload**.")
     else:
         st.markdown("### 🔮 Forecast (Predictive Analysis)")
-        # date candidates
         date_candidates = []
         for c in df.columns:
-            if pd.api.types.is_datetime64_any_dtype(df[c]):
-                date_candidates.append(c)
-            else:
-                sample = df[c].dropna().head(50)
-                if len(sample) > 0:
-                    parsed = pd.to_datetime(sample, errors="coerce")
-                    if parsed.notna().mean() > 0.7:
-                        date_candidates.append(c)
+            sample = df[c].dropna().head(50)
+            if len(sample) > 0:
+                parsed = pd.to_datetime(sample, errors="coerce")
+                if parsed.notna().mean() > 0.7:
+                    date_candidates.append(c)
 
         num = numeric_cols(df)
         if not date_candidates or not num:
@@ -631,7 +549,6 @@ elif page == "🔮 Forecast":
                 fig = go.Figure()
                 fig.add_trace(go.Scatter(x=hist[dcol], y=hist[tcol], mode="lines+markers", name="History"))
                 fig.add_trace(go.Scatter(x=fut[dcol], y=fut[tcol], mode="lines+markers", name="Forecast"))
-                fig.update_layout(title=f"Forecast: {tcol}", xaxis_title=dcol, yaxis_title=tcol)
                 st.plotly_chart(fig, use_container_width=True)
                 st.dataframe(fut.head(50), use_container_width=True)
 
@@ -649,15 +566,7 @@ else:
         q = st.text_input("Type your question")
         if q.strip():
             kind, out = nl_query(df, q)
-            st.markdown("<div class='glass'>", unsafe_allow_html=True)
             if kind == "table":
-                st.write(out)
+                st.dataframe(out, use_container_width=True)
             else:
                 st.write(out)
-
-            st.markdown(
-    """
-    <meta name="google-site-verification" content="Yr6DCmnKvnLK57ejhzk4-qj6HX8CwTKG26DxQTg4heQ" />
-    """,
-    unsafe_allow_html=True
-)
